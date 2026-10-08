@@ -1,0 +1,90 @@
+"""
+Script: run_monte_carlo_validation.py
+Description: Robustness validation via Latin Hypercube Sampling (LHS) Monte Carlo (N = 1000).
+             Replicates the stochastic boundaries in Table 4 of the manuscript.
+Authors: Nikitas Gerolimos et al.
+License: MIT
+"""
+
+import numpy as np
+from scipy.stats import qmc
+
+def run_lhs_monte_carlo_validation(n_iterations: int = 1000, seed: int = 42):
+    print(f"\n--- Launching Latin Hypercube Monte Carlo Simulation (N = {n_iterations}) ---")
+    
+    # 1. 5D Latin Hypercube Sampling
+    sampler = qmc.LatinHypercube(d=5, seed=seed)
+    sample_matrix = sampler.random(n=n_iterations)
+    
+    # 2. Rescaling bounds: [m_body, m_load, b_musc, D_base, F_tremor]
+    lower_bounds = [55.0, 3.0, 0.040, 15.0, 10.0]
+    upper_bounds = [105.0, 7.5, 0.060, 25.0, 25.0]
+    scaled_params = qmc.scale(sample_matrix, lower_bounds, upper_bounds)
+    
+    f_comp_open_loop = np.zeros(n_iterations)
+    f_comp_closed_loop = np.zeros(n_iterations)
+    tremor_reduction_pct = np.zeros(n_iterations)
+    
+    g = 9.80665
+    pitch_unassisted_deg = 38.5   # Acute fatigue posture
+    pitch_assisted_deg = 12.8     # Restored posture (+0.15m FABRIK waypoint)
+    
+    rad_open = np.radians(pitch_unassisted_deg)
+    rad_closed = np.radians(pitch_assisted_deg)
+    
+    L_torso_com = 0.35
+    L_arms = 0.40
+    d_reach = 0.15
+    
+    beta = 12.5
+    K_t = 35.0
+    
+    for i in range(n_iterations):
+        m_body, m_load, b_musc, D_base, F_tremor = scaled_params[i]
+        
+        B = 0.60 * m_body * g
+        W = m_load * g
+        
+        # Open-Loop Biomechanical Compression (Chaffin)
+        b_torso_open = L_torso_com * np.sin(rad_open)
+        w_load_open = L_arms * np.sin(rad_open) + d_reach
+        es_open = (B * b_torso_open + W * w_load_open) / b_musc
+        f_comp_open_loop[i] = es_open + (B + W) * np.cos(rad_open)
+        
+        # Closed-Loop FABRIK Mitigation
+        b_torso_closed = L_torso_com * np.sin(rad_closed)
+        w_load_closed = L_arms * np.sin(rad_closed) + d_reach
+        es_closed = (B * b_torso_closed + W * w_load_closed) / b_musc
+        f_comp_closed_loop[i] = es_closed + (B + W) * np.cos(rad_closed)
+        
+        # Non-Linear Tanh Admittance Dissipation
+        eta_dissipation = (K_t / (D_base + K_t)) * np.tanh(beta * (F_tremor / 18.0))
+        tremor_reduction_pct[i] = eta_dissipation * 100.0
+
+    # 3. Statistical Analysis
+    ci_open = np.percentile(f_comp_open_loop, [2.5, 50.0, 97.5])
+    ci_closed = np.percentile(f_comp_closed_loop, [2.5, 50.0, 97.5])
+    ci_tremor = np.percentile(tremor_reduction_pct, [2.5, 50.0, 97.5])
+    
+    niosh_viol_open = (np.sum(f_comp_open_loop > 3400.0) / n_iterations) * 100.0
+    niosh_viol_closed = (np.sum(f_comp_closed_loop > 3400.0) / n_iterations) * 100.0
+    
+    print("\n" + "="*70)
+    print("      LATIN HYPERCUBE MONTE CARLO VALIDATION RESULTS (N = 1000)    ")
+    print("="*70)
+    print(f"Open-Loop L5/S1 Compression:   Median = {ci_open[1]:.1f} N  "
+          f"[95% CI: {ci_open[0]:.1f}, {ci_open[2]:.1f}] N")
+    print(f"-> NIOSH Limit Violations (3,400 N): {niosh_viol_open:.1f}%")
+    print("-"*70)
+    print(f"Closed-Loop L5/S1 Compression: Median = {ci_closed[1]:.1f} N  "
+          f"[95% CI: {ci_closed[0]:.1f}, {ci_closed[2]:.1f}] N")
+    print(f"-> NIOSH Limit Violations (3,400 N): {niosh_viol_closed:.1f}% (Complete Elimination)")
+    print("-"*70)
+    print(f"Cobot Velocity RMS Tremor Attenuation: Median = {ci_tremor[1]:.1f}%  "
+          f"[95% CI: {ci_tremor[0]:.1f}%, {ci_tremor[2]:.1f}%]")
+    print("="*70 + "\n")
+    
+    return f_comp_open_loop, f_comp_closed_loop, tremor_reduction_pct
+
+if __name__ == "__main__":
+    run_lhs_monte_carlo_validation(n_iterations=1000, seed=42)
