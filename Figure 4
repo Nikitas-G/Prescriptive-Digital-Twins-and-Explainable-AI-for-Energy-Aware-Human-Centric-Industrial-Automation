@@ -1,0 +1,72 @@
+# PLOTTING SCRIPT FOR FIGURE 4 (OPTIMIZED HEADROOM FOR PHASE LABELS)
+
+fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(13, 15.5), sharex=True, dpi=300)
+plt.subplots_adjust(hspace=0.22)
+
+#  Panel (a) 
+ax1.plot(t, lye, color='#d62728', lw=1.2, label=r'Lyapunov Exponent $\mathrm{LyE}$')
+ax1.axhline(8.0362, color='#d62728', linestyle=':', lw=1.2)
+ax1.set_ylabel(r'$\mathrm{LyE}$ [bits/sample]', fontsize=10, fontweight='bold', color='#d62728')
+ax1.set_ylim(6.65, 8.55)  # Extended limit to prevent overlap with phase label bounding boxes
+ax1.tick_params(axis='y', labelcolor='#d62728')
+
+ax1_r = ax1.twinx()
+ax1_r.plot(t, h_roll, color='#1f77b4', lw=1.2, label=r'Entropy $H_{\mathrm{Roll}}$')
+ax1_r.set_ylabel(r'$H_{\mathrm{Roll}}$ [bits]', fontsize=10, fontweight='bold', color='#1f77b4')
+ax1_r.set_ylim(3.55, 4.95)
+ax1_r.tick_params(axis='y', labelcolor='#1f77b4')
+ax1.set_title(r'(a) Non-Linear Biological State Divergence', fontsize=11, fontweight='bold', pad=12)
+
+# Operational Phase Labels (elevated position at y = 8.41)
+phases = [300, 675, 975]
+phase_labels = ['Phase $T_0$\n(Baseline)', 'Phase $T_1$\n(Fatigue)', 'Phase $T_2$\n(Breakdown)', 'Phase $T_3$\n(Recovery)']
+phase_x = [150, 487.5, 825, 1100]
+
+for px, label in zip(phase_x, phase_labels):
+    ax1.text(px, 8.41, label, ha='center', va='center', fontsize=8.5, fontweight='bold',
+             bbox=dict(boxstyle='square,pad=0.25', facecolor='#ffffff', edgecolor='#cccccc', alpha=0.95))
+
+#  Panel (b) 
+ax2.plot(t, phi_lye, color='#d62728', lw=1.3, label=r'$\phi_{\mathrm{LyE}}$')
+ax2.plot(t, phi_hroll, color='#1f77b4', lw=1.3, label=r'$\phi_{H_{\mathrm{Roll}}}$')
+ax2.plot(t, phi_dt, color='#2ca02c', lw=1.3, label=r'$\phi_{\Delta t}$')
+ax2.set_ylabel(r'Shapley Value $\phi_i(t)$', fontsize=10, fontweight='bold')
+ax2.set_title(r'(b) Real-Time Explainable Prescriptive Attribution Vector', fontsize=11, fontweight='bold')
+ax2.legend(loc='upper left', ncol=3, frameon=True, facecolor='#ffffff', edgecolor='#cccccc')
+ax2.set_ylim(-0.45, 0.50)
+ax2.grid(True, linestyle=':', alpha=0.5)
+
+#  Panel (c) 
+ax3.plot(t, f_open, color='#7f7f7f', lw=1.0, alpha=0.75, label='Open-Loop')
+ax3.plot(t, f_closed, color='#2ca02c', lw=1.2, label='Closed-Loop')
+ax3.axhline(3400.0, color='#d62728', lw=1.5, linestyle='-', label='NIOSH Limit (3,400 N)')
+ax3.set_ylabel(r'$F_{\mathrm{comp}}$ [N]', fontsize=10, fontweight='bold')
+ax3.set_title(r'(c) Biomechanical Lumbar Protection', fontsize=11, fontweight='bold')
+ax3.legend(loc='upper left', frameon=True, facecolor='#ffffff', edgecolor='#cccccc')
+ax3.set_ylim(400, 4350)
+ax3.grid(True, linestyle=':', alpha=0.5)
+
+# Panel (d) 
+ax4.plot(t, tremor_open, color='#7f7f7f', lw=1.1, alpha=0.75, label='Open-Loop')
+ax4.plot(t, tremor_closed, color='#9467bd', lw=1.3, label='Closed-Loop')
+ax4.set_ylabel(r'Velocity Tremor RMS [mm/s]', fontsize=10, fontweight='bold')
+ax4.set_title(r'(d) Physical Interaction Stability (Non-Linear Damping Dissipation $\dot{V} \leq 0$)', fontsize=11, fontweight='bold')
+ax4.legend(loc='upper left', frameon=True, facecolor='#ffffff', edgecolor='#cccccc')
+ax4.set_xlabel('Operational Shift Timeline [Seconds]', fontsize=11, fontweight='bold')
+ax4.set_xlim(0, 1222.65)
+ax4.set_ylim(5, 65)
+ax4.grid(True, linestyle=':', alpha=0.5)
+
+# Vertical dashed demarcators across all subplots
+for ax in [ax1, ax2, ax3, ax4]:
+    for p in phases:
+        ax.axvline(p, color='#333333', linestyle='--', lw=1.0, alpha=0.6)
+
+# Save figure in publication quality (300 DPI)
+output_fig4 = "Figure_4_Closed_Loop_Validation.png"
+plt.savefig(output_fig4, dpi=300, bbox_inches='tight')
+plt.close()
+
+# Display inline in notebook environment
+from IPython.display import Image, display
+display(Image(filename=output_fig4))
