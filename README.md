@@ -17,9 +17,9 @@ This repository contains the replication code, computational state-space observe
 This project implements a multi-tier closed-loop Prescriptive Cyber-Physical System (CPS) architecture designed for collaborative assembly workcells (pHRI) in Industry 5.0:
 
 1. **Non-Linear Biological State Observer (LET):** Reconstructs kinematic state-space manifolds using Takens delay coordinate embedding ($m=3, \tau_{\text{emb}}=4$) and quantifies neuromuscular stability via Largest Lyapunov Exponents ($\text{LyE}$) and coronal plane configurational Shannon Entropy ($H_{\text{Roll}}$).
-2. **Supervisory Explainable AI (XAI):** Predicts operational risk probabilities via LightGBM and decomposes decision boundaries in real time ($<2.5\text{ ms}$) using TreeSHAP ($φ(t)$).
+2. **Supervisory Explainable AI (XAI):** Predicts operational risk probabilities via LightGBM and decomposes decision boundaries in real time ($<2.5\text{ ms}$) using TreeSHAP (φ(t)).
 3. **Multi-Tier Prescriptive Actuation:**
-   - **Kinematic Adaptation:** Executes FABRIK-$A*$ delivery waypoint elevation ($\Delta z = +0.15\text{ m}$) to reduce lumbar compressive loads ($F_{\text{comp}}$ at L5/S1 below the $3,400\text{ N}$ NIOSH limit).
+   - **Kinematic Adaptation:** Executes FABRIK-A* delivery waypoint elevation ($\Delta z = +0.15\text{ m}$) to reduce lumbar compressive loads ($F_{\text{comp}}$ at L5/S1 below the $3,400\text{ N}$ NIOSH limit).
    - **Physical Damping:** Dampens dynamic operator tremor via non-linear hyperbolic tangent ($\tanh$) admittance control ($\dot{V} \le 0$).
    - **Enterprise Integration:** Emits asynchronous JSON payloads to plant MES (takt time derating) and ERP (fatigue-aware recovery scheduling).
 
